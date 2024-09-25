@@ -1,5 +1,11 @@
 from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
+import json
+
+with open('server/datastore.json', 'r') as file:
+    data = json.load(file)
+
+print(data)
 
 app = Flask(__name__)
 CORS(app)
