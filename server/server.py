@@ -2,33 +2,18 @@ from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
 import json
 
-with open('server/datastore.json', 'r') as file:
-    data = json.load(file)
-
-print(data)
+data = {
+  "groups": [],
+  "students": []
+}
 
 app = Flask(__name__)
 CORS(app)
 
 @app.route('/api/groups', methods=['GET'])
 def get_groups():
-    """
-    Route to get all groups
-    return: Array of group objects
-    """
     # TODO: (sample response below)
-    return jsonify([
-        {
-            "id": 1,
-            "groupName": "Group 1",
-            "members": [1, 2, 3],
-        },
-        {
-            "id": 2,
-            "groupName": "Group 2",
-            "members": [4, 5],
-        },
-    ])
+    return jsonify(data['groups'])
 
 @app.route('/api/students', methods=['GET'])
 def get_students():
@@ -37,13 +22,7 @@ def get_students():
     return: Array of student objects
     """
     # TODO: (sample response below)
-    return jsonify([
-        {"id": 1, "name": "Alice"},
-        {"id": 2, "name": "Bob"},
-        {"id": 3, "name": "Charlie"},
-        {"id": 4, "name": "David"},
-        {"id": 5, "name": "Eve"},
-    ])
+    return jsonify(data['students'])
 
 @app.route('/api/groups', methods=['POST'])
 def create_group():
@@ -60,12 +39,29 @@ def create_group():
     group_members = group_data.get("members")
     
     # TODO: implement storage of a new group and return their info (sample response below)
+    id = data['groups'][-1]['id'] + 1 if len(data['groups']) > 0 else 0
 
-    return jsonify({
-        "id": 3,
-        "groupName": "New Group",
-        "members": [1, 2],
-    }), 201
+    students = []
+
+    for member in group_members:
+        if (len(data['students']) > 0):
+            student = {"id": data['students'][-1]['id'] + 1, "name": member}
+        else:
+            student = {"id": 0, "name": member}
+        students.append(student)
+        data['students'].append(student)
+
+    group = {
+        "id": id,
+        "groupName": group_name,
+        "members": students,
+    }
+
+    print(group)
+
+    data['groups'].append(group)
+
+    return jsonify(group), 201
 
 @app.route('/api/groups/<int:group_id>', methods=['DELETE'])
 def delete_group(group_id):
@@ -75,6 +71,9 @@ def delete_group(group_id):
     return: Empty response with status code 204
     """
     # TODO: (delete the group with the specified id)
+    for group in data['groups']:
+        if group['id'] == group_id:
+            data['groups'].remove(group)
 
     return '', 204  # Return 204 (do not modify this line)
 
@@ -86,18 +85,14 @@ def get_group(group_id):
     return: The group object with member details
     """
     # TODO: (sample response below)
-    return jsonify({
-        "id": 1,
-        "groupName": "Group 1",
-        "members": [
-            {"id": 1, "name": "Alice"},
-            {"id": 2, "name": "Bob"},
-            {"id": 3, "name": "Charlie"},
-        ],
-    })
-    # TODO:
-    # if group id isn't valid:
-    #     abort(404, "Group not found")
+    for group in data['groups']:
+        if group['id'] == group_id:
+            return jsonify(group)
+    
+    abort(404, "Group not found")
 
 if __name__ == '__main__':
     app.run(port=3902, debug=True)
+
+
+# edge case - if two students have the same name
